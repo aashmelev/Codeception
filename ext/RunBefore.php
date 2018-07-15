@@ -8,8 +8,8 @@ use Codeception\Extension;
 use Symfony\Component\Process\Process;
 
 /**
- * Extension to start and stop processes per suite.
- * Can be used to start/stop selenium server, chromedriver, phantomjs, mailcatcher, etc.
+ * Extension to run some processes before running tests.
+ * Can be used to build files using webpack before running the tests.
  *
  * Can be configured in suite config:
  *
@@ -17,34 +17,8 @@ use Symfony\Component\Process\Process;
  * # acceptance.suite.yml
  * extensions:
  *     enabled:
- *         - Codeception\Extension\RunProcess:
- *             - chromedriver
- * ```
- *
- * Multiple parameters can be passed as array:
- *
- * ```yaml
- * # acceptance.suite.yml
- *
- * extensions:
- *     enabled:
- *         - Codeception\Extension\RunProcess:
- *             - php -S 127.0.0.1:8000 -t tests/data/app
- *             - java -jar ~/selenium-server.jar
- * ```
- *
- * In the end of a suite all launched processes will be stopped.
- *
- * To wait for the process to be launched use `sleep` option.
- * In this case you need configuration to be specified as object:
- *
- * ```yaml
- * extensions:
- *     enabled:
- *         - Codeception\Extension\RunProcess:
- *             0: java -jar ~/selenium-server.jar
- *             1: mailcatcher
- *             sleep: 5 # wait 5 seconds for processes to boot
+ *         - Codeception\Extension\RunBefore:
+ *             - yarn run build-dev
  * ```
  *
  * HINT: you can use different configurations per environment.
@@ -52,14 +26,13 @@ use Symfony\Component\Process\Process;
 class RunBefore extends Extension
 {
     public $config = [];
-    
+
     static $events = [
-        Events::SUITE_BEFORE => 'runProcess',
-        Events::SUITE_AFTER => 'stopProcess'
+        Events::SUITE_BEFORE => 'runProcess'
     ];
 
     protected $processes = [];
-    
+
     public function _initialize()
     {
         if (!class_exists('Symfony\Component\Process\Process')) {
@@ -82,23 +55,5 @@ class RunBefore extends Extension
             $process->run();
             $this->processes[] = $process;
         }
-    }
-
-    public function __destruct()
-    {
-        $this->stopProcess();
-    }
-
-    public function stopProcess()
-    {
-        foreach (array_reverse($this->processes) as $process) {
-            /** @var $process Process  **/
-            if (!$process->isRunning()) {
-                continue;
-            }
-            $this->output->debug('[RunProcess] Stopping ' . $process->getCommandLine());
-            $process->stop();
-        }
-        $this->processes = [];
     }
 }
