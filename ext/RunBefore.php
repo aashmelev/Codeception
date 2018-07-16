@@ -31,8 +31,6 @@ class RunBefore extends Extension
         Events::SUITE_BEFORE => 'runProcess'
     ];
 
-    protected $processes = [];
-
     public function _initialize()
     {
         if (!class_exists('Symfony\Component\Process\Process')) {
@@ -42,18 +40,11 @@ class RunBefore extends Extension
 
     public function runProcess()
     {
-        $this->processes = [];
         foreach ($this->config as $key => $command) {
-            if (!$command) {
-                continue;
-            }
-            if (!is_int($key)) {
-                continue; // configuration options
-            }
             $process = new Process($command, $this->getRootDir(), null, null, null);
-            $this->output->debug('[RunProcess] Starting '.$command);
+            $this->output->debug('[RunBefore] Starting ' . $command);
             $process->run();
-            $this->processes[] = $process;
+            $this->output->debug('[RunBefore] Completing ' . $process->getCommandLine());
         }
     }
 }
