@@ -8,8 +8,8 @@ use Codeception\Extension;
 use Symfony\Component\Process\Process;
 
 /**
- * Extension to run some processes before running tests.
- * Can be used to build files using webpack before running the tests.
+ * Extension for execution of some processes before running tests.
+ * Can be used to build files using webpack, etc.
  *
  * Can be configured in suite config:
  *
