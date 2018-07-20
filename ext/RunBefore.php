@@ -64,20 +64,22 @@ class RunBefore extends Extension
                 $followingCommands = [];
             }
 
-            $this->runProcess($currentCommand, $followingCommands);
+            $process = $this->runProcess($currentCommand);
+            $this->addProcessToMonitoring($process, $followingCommands);
         }
     }
 
     /**
      * @param string $command
-     * @param string[] $following
+     * @return Process
      */
-    private function runProcess($command, array $followingCommands)
+    private function runProcess($command)
     {
-        $process = new Process($command, $this->getRootDir());
         $this->output->debug('[RunBefore] Starting ' . $command);
+        $process = new Process($command, $this->getRootDir());
         $process->start();
-        $this->addProcessToMonitoring($process, $followingCommands);
+
+        return $process;
     }
 
     /**
@@ -86,9 +88,17 @@ class RunBefore extends Extension
     private function addProcessToMonitoring(Process $process, array $followingCommands)
     {
         $this->processes[] = [
-            'process' => $process,
+            'instance' => $process,
             'following' => $followingCommands
         ];
+    }
+
+    /**
+     * @param int $index
+     */
+    private function removeProcessFromMonitoring($index)
+    {
+        unset($this->processes[$index]);
     }
 
     private function processMonitoring()
@@ -101,13 +111,11 @@ class RunBefore extends Extension
 
     private function checkProcesses()
     {
-        foreach ($this->processes as $key => $process) {
-            if (!$this->isRunning($process['process'])) {
-                $this->output->debug('[RunBefore] Completing ' . $process['process']->getCommandLine());
-
+        foreach ($this->processes as $index => $process) {
+            if (!$this->isRunning($process['instance'])) {
+                $this->output->debug('[RunBefore] Completing ' . $process['instance']->getCommandLine());
                 $this->runFollowingCommand($process['following']);
-
-                unset($this->processes[$key]);
+                $this->removeProcessFromMonitoring($index);
             }
         }
     }
@@ -118,7 +126,8 @@ class RunBefore extends Extension
     private function runFollowingCommand(array $followingCommands)
     {
         if (count($followingCommands) > 0) {
-            $this->runProcess(array_shift($followingCommands), $followingCommands);
+            $process = $this->runProcess(array_shift($followingCommands));
+            $this->addProcessToMonitoring($process, $followingCommands);
         }
     }
 
