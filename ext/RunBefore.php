@@ -10,6 +10,10 @@ use Symfony\Component\Process\Process;
 /**
  * Extension for execution of some processes before running tests.
  *
+ * Processes can be independent and dependent.
+ * Independent processes run independently of each other.
+ * Dependent processes run sequentially one by one.
+ *
  * Can be configured in suite config:
  *
  * ```yaml
